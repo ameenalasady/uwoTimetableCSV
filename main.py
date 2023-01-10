@@ -5,7 +5,12 @@ from datetime import datetime
 import re
 import requests
 import os
-from ICSID import getICSID
+
+
+def getICSID(htmldoc):
+    soup = BeautifulSoup(htmldoc, "html.parser")
+    return (str(soup.find(id="ICSID").get("value")))
+
 
 os.chdir("output")
 
