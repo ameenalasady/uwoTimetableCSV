@@ -5,6 +5,7 @@ from datetime import datetime
 import re
 import requests
 import os
+import time
 
 
 def getICSID(htmldoc):
@@ -25,7 +26,6 @@ loginURL = "https://student.uwo.ca/psp/heprdweb/?&cmd=login&languageCd=ENG"
 get1URL = "https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/NUI_FRAMEWORK.PT_AGSTARTPAGE_NUI.GBL?CONTEXTIDPARAMS=TEMPLATE_ID:PTPPNAVCOL&scname=ADMN_MANAGE_MY_CLASSES&PTPPB_GROUPLET_ID=WSA_MANAGE_CLASSES&CRefName=ADMN_NAVCOLL_5"
 get2URL = "https://student.uwo.ca/psc/heprdweb_newwin/EMPLOYEE/SA/c/PTGP_MENU.PTGP_GROUPLETS_FL.GBL?PTGP_TYPE=NavigationCollectionDataSource&PAGE=PTGP_GPLT_NV_FL&AGComp=N&TEMPLATE_ID=PTPPNAVCOL&scname=ADMN_MANAGE_MY_CLASSES&ICDoModal=1&ICGrouplet=1&ICAction=GROUPLET_CONTENTS$hmodal&ICLoc=1&nWidth=286&nHeight=17"
 get3URL = "https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/SSR_STUDENT_FL.SSR_COMPONENT_FL.GBL?Page=SSR_VW_CLASS_FL&NavColl=true&ICAJAX=1&ICAGTarget=start&ICPanelControlStyle=pst_side1-fixed pst_panel-mode"
-
 
 userid = input("Enter your userid:\n")
 password = input("Enter your password:\n")
@@ -49,7 +49,7 @@ s = requests.Session()
 try:
     print("Logging in...")
     response = s.post(loginURL, data=formData)
-    print("\nGetting schedule...\n")
+    print("\nGetting schedule...")
     icsidResponse = s.get(get1URL)
     iscid = getICSID(icsidResponse.text)
     s.get(get2URL)
@@ -84,7 +84,38 @@ try:
         "DERIVED_SSR_FL_SSR_VW_CLSCHD_OPT": "L"
     }
 
+    checkCoursesFormData = {
+        "ICAction": "DERIVED_SSR_FL_SSR_VW_CLSCHD_OPT$81$",
+        "ICModelCancel": "0",
+        "ICXPos": "0",
+        "ICYPos": "0",
+        "ResponsetoDiffFrame": "-1",
+        "TargetFrameName": "None",
+        "FacetPath": "None",
+        "ICFocus": "",
+        "ICSaveWarningFilter": "0",
+        "ICChanged": "0",
+        "ICSkipPending": "0",
+        "ICAutoSave": "0",
+        "ICResubmit": "0",
+        "ICSID": str(iscid),
+        "ICAGTarget": "true",
+        "ICActionPrompt": "false",
+        "ICBcDomData": "C~UnknownValue~EMPLOYEE~SA~NUI_FRAMEWORK.PT_LANDINGPAGE.GBL~PT_LANDINGPAGE~Student Homepage~UnknownValue~UnknownValue~https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/NUI_FRAMEWORK.PT_LANDINGPAGE.GBL?~UnknownValue*C~UnknownValue~EMPLOYEE~SA~PT_FLDASHBOARD.PT_FLDASHBOARD.GBL~PT_LANDINGPAGE~Academics~UnknownValue~UnknownValue~https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/PT_FLDASHBOARD.PT_FLDASHBOARD.GBL?DB=WSA_ACADEMICS~UnknownValue*C~UnknownValue~EMPLOYEE~SA~NUI_FRAMEWORK.PT_AGSTARTPAGE_NUI.GBL~PT_AGSTARTPAGE_NUI~Course Registration~UnknownValue~UnknownValue~https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/NUI_FRAMEWORK.PT_AGSTARTPAGE_NUI.GBL?CONTEXTIDPARAMS=TEMPLATE_ID%3aPTPPNAVCOL&scname=ADMN_MANAGE_MY_CLASSES&PTPPB_GROUPLET_ID=WSA_MANAGE_CLASSES&CRefName=ADMN_NAVCOLL_5&ptgpid=ADMN_S202205301002261020844141~UnknownValue",
+        "ICDNDSrc": "",
+        "ICPanelHelpUrl": "http://www.registrar.uwo.ca/general-information/how_to_guides/index.html",
+        "ICPanelName": "",
+        "ICPanelControlStyle": "pst_side1-fixed pst_panel-mode pst_side2-hidden",
+        "ICFind": "",
+        "ICAddCount": "",
+        "ICAppClsData": "",
+        "win0hdrdivPT_SYSACT_HELP": "",
+        "DERIVED_SSR_FL_SSR_VW_CLSCHD_OPT$81$": "D"
+    }
+
     endDateEndTimeData = str(s.post(postURL, data=postFormData).text)
+    checkDates = str(s.post(postURL, data=checkCoursesFormData).text)
+
 except Exception as e:
     print("Something went wrong\n")
     print(e)
@@ -105,6 +136,62 @@ responseTextEnd = open("responsetextend.txt", "w")
 responseTextEnd.write(text)
 responseTextEnd.close()
 
+
+soup = BeautifulSoup(checkDates, "html.parser")
+[s.extract() for s in soup(['style', 'script', '[document]', 'head', 'title'])]
+visible_text = soup.getText()
+
+textCheckCourses = str(visible_text)
+
+responseCheckCourses = open("responseCheckCourses.txt", "w")
+responseCheckCourses.write(textCheckCourses)
+responseCheckCourses.close()
+
+
+# checkCoursesIndices = [m.start()
+#                        for m in re.finditer("Class Details - ", textCheckCourses)]
+# newLineIndicesCheckCourses = []
+
+# checkCourses = []
+
+# for i in range(len(checkCoursesIndices)):
+#     newLineIndicesCheckCourses.append(
+#         textCheckCourses[textCheckCourses[i]::].find("\n"))
+
+#     checkCourses.append(
+#         textCheckCourses[textCheckCourses[i]: newLineIndicesCheckCourses[i]])
+
+# checkCourses = list(set(checkCourses))
+
+# print(checkCourses)
+
+
+indicesOfTimes = [m.start()
+                  for m in re.finditer("Time", textCheckCourses)]
+
+indicesofEndOfTimes = []
+
+for i in range(len(indicesOfTimes)):
+    indicesofEndOfTimes.append(
+        textCheckCourses[indicesOfTimes[i]::].find("\n")+indicesOfTimes[i])
+
+indicesOfSubjects = []
+indicesOfEndofSubjects = []
+subjects = []
+
+for i in range(len(indicesofEndOfTimes)):
+    indicesOfSubjects.append(indicesofEndOfTimes[i]+3)
+
+    indicesOfEndofSubjects.append(
+        (textCheckCourses[indicesOfSubjects[i]::].find("\n"))+indicesOfSubjects[i])
+
+    subjects.append(
+        textCheckCourses[indicesOfSubjects[i]:indicesOfEndofSubjects[i]])
+
+
+for i in range(len(subjects)):
+    subjects[i] = (str(subjects[i].split(" ")[0]) + " " +
+                   str(subjects[i].split(" ")[1])).strip()
 
 daysScheduledIndices = [m.start()
                         for m in re.finditer("DaysSchedule", text)]
@@ -302,6 +389,10 @@ def datesBetweenTwoDates(startDate, endDate, weekDay):
     return dates
 
 
+# for i in range(len(courseName)):
+#     courseName[i] = str(courseName[i].split(" ")[
+#         0]) + " " + str(courseName[i].split(" ")[1]) + " " + str(courseName[i].split(" ")[4])
+
 whereWeAre = 0
 
 index = 0
@@ -313,13 +404,14 @@ for i in range(len(courseName)):
             for weekDays in days[index].split(" "):
                 for dates in datesBetweenTwoDates(dateStart[index], dateEnd[index], weekDays):
                     if dateNow <= datetime(int(str(dateEnd[index]).split("/")[0]), int(str(dateEnd[index]).split("/")[1]), int(str(dateEnd[index]).split("/")[2])).date():
-                        html.write(str(courseName[i]) + " " + str(titles[i][j])+"," +
-                                   str(timeStart[index]) + "," +
-                                   str(timeEnd[index]) + "," +
-                                   str(dates) + "," +
-                                   str(dates)+"," +
-                                   str(rooms[index]) + "," +
-                                   "\n")
+                        if courseName[i] in subjects:
+                            html.write(str(courseName[i]) + " " + str(titles[i][j].split(" ")[2])+"," +
+                                       str(timeStart[index]) + "," +
+                                       str(timeEnd[index]) + "," +
+                                       str(dates) + "," +
+                                       str(dates)+"," +
+                                       str(rooms[index]) + "," +
+                                       "\n")
                 if len(weekDays) > 1 and weekDays != days[index].split(" ")[len(days[index].split(" "))-1]:
                     pass
                 else:
