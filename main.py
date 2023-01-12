@@ -417,3 +417,5 @@ for i in range(len(courseName)):
                 else:
                     index += 1
         whereWeAre += 1
+
+print("Output CSV file has been saved in /output/"+str(filename)+".csv")
