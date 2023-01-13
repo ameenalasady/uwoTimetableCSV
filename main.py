@@ -36,7 +36,7 @@ formData = {
     "ptmode": "f",
     "ptlangcd": "ENG",
     "ptinstalledlang": "ENG",
-    "userid": userid,
+    "userid": userid.upper(),
     "pwd": password
 }
 
@@ -419,3 +419,5 @@ for i in range(len(courseName)):
         whereWeAre += 1
 
 print("Output CSV file has been saved in /output/"+str(filename)+".csv")
+
+input("Press any button to exit.")
