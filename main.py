@@ -3,15 +3,29 @@ from dateutil.rrule import *
 from dateutil.rrule import rrule
 from datetime import datetime
 import re
-import requests
 import os
 import time
+import json
+
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
-def getICSID(htmldoc):
-    soup = BeautifulSoup(htmldoc, "html.parser")
-    return (str(soup.find(id="ICSID").get("value")))
+with open("info.json", "r") as f:
+    userInfo = json.load(f)
 
+selectedCourses = []
+
+userid = userInfo["userid"]
+
+password = userInfo["password"]
+
+PATH = userInfo["ChromeDriverPath"]
+
+service = Service(PATH)
 
 os.chdir("output")
 
@@ -21,107 +35,66 @@ dateNow = datetime.today().date()
 
 filename = now.strftime("%Y-%m-%d_%H-%M-%S")
 
+op = webdriver.ChromeOptions()
+# uncomment this if you want chrome to be hidden.
+# op.add_argument('--headless')
+op.add_argument('--service')
+op.add_argument('--hide-scrollbars')
+op.add_argument('--disable-gpu')
+op.add_argument('--log-level=3')
+driver = webdriver.Chrome(options=op)
+driver.implicitly_wait(10)
 
-loginURL = "https://student.uwo.ca/psp/heprdweb/?&cmd=login&languageCd=ENG"
-get1URL = "https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/NUI_FRAMEWORK.PT_AGSTARTPAGE_NUI.GBL?CONTEXTIDPARAMS=TEMPLATE_ID:PTPPNAVCOL&scname=ADMN_MANAGE_MY_CLASSES&PTPPB_GROUPLET_ID=WSA_MANAGE_CLASSES&CRefName=ADMN_NAVCOLL_5"
-get2URL = "https://student.uwo.ca/psc/heprdweb_newwin/EMPLOYEE/SA/c/PTGP_MENU.PTGP_GROUPLETS_FL.GBL?PTGP_TYPE=NavigationCollectionDataSource&PAGE=PTGP_GPLT_NV_FL&AGComp=N&TEMPLATE_ID=PTPPNAVCOL&scname=ADMN_MANAGE_MY_CLASSES&ICDoModal=1&ICGrouplet=1&ICAction=GROUPLET_CONTENTS$hmodal&ICLoc=1&nWidth=286&nHeight=17"
-get3URL = "https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/SSR_STUDENT_FL.SSR_COMPONENT_FL.GBL?Page=SSR_VW_CLASS_FL&NavColl=true&ICAJAX=1&ICAGTarget=start&ICPanelControlStyle=pst_side1-fixed pst_panel-mode"
 
-userid = input("Enter your userid:\n")
-password = input("Enter your password:\n")
+driver.get("https://student.uwo.ca/")
 
-formData = {
-    "httpPort2": "",
-    "timezoneOffset": 300,
-    "ptmode": "f",
-    "ptlangcd": "ENG",
-    "ptinstalledlang": "ENG",
-    "userid": userid.upper(),
-    "pwd": password
-}
+useridField = driver.find_element(By.ID, "userid")
+passwordField = driver.find_element(By.ID, "pwd")
 
-dataURL = "https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/SSR_STUDENT_FL.SSR_COMPONENT_FL.GBL?PAGE=SSR_VW_CLASS_FL"
+useridField.send_keys(userid)
+passwordField.send_keys(password)
 
-postURL = "https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/SSR_STUDENT_FL.SSR_COMPONENT_FL.GBL"
+submitButton = driver.find_element(By.CLASS_NAME, "ps-button")
+submitButton.click()
 
-s = requests.Session()
+print("\nPlease complete your 2FA.\n")
 
-try:
-    print("Logging in...")
-    response = s.post(loginURL, data=formData)
-    print("\nGetting schedule...")
-    icsidResponse = s.get(get1URL)
-    iscid = getICSID(icsidResponse.text)
-    s.get(get2URL)
-    s.get(get3URL)
+while (True):
 
-    postFormData = {
-        "ICAction": "DERIVED_SSR_FL_SSR_VW_CLSCHD_OPT",
-        "ICModelCancel": "0",
-        "ICXPos": "0",
-        "ICYPos": "0",
-        "ResponsetoDiffFrame": "-1",
-        "TargetFrameName": "None",
-        "FacetPath": "None",
-        "ICFocus": "",
-        "ICSaveWarningFilter": "0",
-        "ICChanged": "0",
-        "ICSkipPending": "0",
-        "ICAutoSave": "0",
-        "ICResubmit": "0",
-        "ICSID": str(iscid),
-        "ICAGTarget": "true",
-        "ICActionPrompt": "false",
-        "ICBcDomData": "C~UnknownValue~EMPLOYEE~SA~NUI_FRAMEWORK.PT_LANDINGPAGE.GBL~PT_LANDINGPAGE~Student Homepage~UnknownValue~UnknownValue~https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/NUI_FRAMEWORK.PT_LANDINGPAGE.GBL?~UnknownValue*C~UnknownValue~EMPLOYEE~SA~PT_FLDASHBOARD.PT_FLDASHBOARD.GBL~PT_LANDINGPAGE~Academics~UnknownValue~UnknownValue~https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/PT_FLDASHBOARD.PT_FLDASHBOARD.GBL?DB=WSA_ACADEMICS&lp=SA.EMPLOYEE.WSA_ACADEMICS~UnknownValue*C~UnknownValue~EMPLOYEE~SA~PT_FLDASHBOARD.PT_FLDASHBOARD.GBL~PT_LANDINGPAGE~Academics~UnknownValue~UnknownValue~https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/PT_FLDASHBOARD.PT_FLDASHBOARD.GBL?DB=WSA_ACADEMICS&lp=SA.EMPLOYEE.WSA_ACADEMICS~UnknownValue*C~UnknownValue~EMPLOYEE~SA~NUI_FRAMEWORK.PT_AGSTARTPAGE_NUI.GBL~PT_AGSTARTPAGE_NUI~Course Registration~UnknownValue~UnknownValue~https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/NUI_FRAMEWORK.PT_AGSTARTPAGE_NUI.GBL?CONTEXTIDPARAMS=TEMPLATE_ID%3aPTPPNAVCOL&scname=ADMN_MANAGE_MY_CLASSES&PTPPB_GROUPLET_ID=WSA_MANAGE_CLASSES&CRefName=ADMN_NAVCOLL_5&ptgpid=ADMN_S202205301002261020844141~UnknownValue",
-        "ICDNDSrc": "",
-        "ICPanelHelpUrl": "http://www.registrar.uwo.ca/general-information/how_to_guides/index.html",
-        "ICPanelName": "",
-        "ICPanelControlStyle": "pst_side1-fixed pst_panel-mode pst_side2-hidden",
-        "ICFind": "",
-        "ICAddCount": "",
-        "ICAppClsData": "",
-        "win0hdrdivPT_SYSACT_HELP": "",
-        "DERIVED_SSR_FL_SSR_VW_CLSCHD_OPT": "L"
-    }
+    try:
+        passedYet = WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located((By.ID, "win0divLPNAVSELECT")))
+        break
+    except:
+        print("2FA failed, trying again.\n")
+        driver.refresh()
 
-    checkCoursesFormData = {
-        "ICAction": "DERIVED_SSR_FL_SSR_VW_CLSCHD_OPT$81$",
-        "ICModelCancel": "0",
-        "ICXPos": "0",
-        "ICYPos": "0",
-        "ResponsetoDiffFrame": "-1",
-        "TargetFrameName": "None",
-        "FacetPath": "None",
-        "ICFocus": "",
-        "ICSaveWarningFilter": "0",
-        "ICChanged": "0",
-        "ICSkipPending": "0",
-        "ICAutoSave": "0",
-        "ICResubmit": "0",
-        "ICSID": str(iscid),
-        "ICAGTarget": "true",
-        "ICActionPrompt": "false",
-        "ICBcDomData": "C~UnknownValue~EMPLOYEE~SA~NUI_FRAMEWORK.PT_LANDINGPAGE.GBL~PT_LANDINGPAGE~Student Homepage~UnknownValue~UnknownValue~https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/NUI_FRAMEWORK.PT_LANDINGPAGE.GBL?~UnknownValue*C~UnknownValue~EMPLOYEE~SA~PT_FLDASHBOARD.PT_FLDASHBOARD.GBL~PT_LANDINGPAGE~Academics~UnknownValue~UnknownValue~https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/PT_FLDASHBOARD.PT_FLDASHBOARD.GBL?DB=WSA_ACADEMICS~UnknownValue*C~UnknownValue~EMPLOYEE~SA~NUI_FRAMEWORK.PT_AGSTARTPAGE_NUI.GBL~PT_AGSTARTPAGE_NUI~Course Registration~UnknownValue~UnknownValue~https://student.uwo.ca/psc/heprdweb/EMPLOYEE/SA/c/NUI_FRAMEWORK.PT_AGSTARTPAGE_NUI.GBL?CONTEXTIDPARAMS=TEMPLATE_ID%3aPTPPNAVCOL&scname=ADMN_MANAGE_MY_CLASSES&PTPPB_GROUPLET_ID=WSA_MANAGE_CLASSES&CRefName=ADMN_NAVCOLL_5&ptgpid=ADMN_S202205301002261020844141~UnknownValue",
-        "ICDNDSrc": "",
-        "ICPanelHelpUrl": "http://www.registrar.uwo.ca/general-information/how_to_guides/index.html",
-        "ICPanelName": "",
-        "ICPanelControlStyle": "pst_side1-fixed pst_panel-mode pst_side2-hidden",
-        "ICFind": "",
-        "ICAddCount": "",
-        "ICAppClsData": "",
-        "win0hdrdivPT_SYSACT_HELP": "",
-        "DERIVED_SSR_FL_SSR_VW_CLSCHD_OPT$81$": "D"
-    }
+print("2FA complete.\n")
 
-    endDateEndTimeData = str(s.post(postURL, data=postFormData).text)
-    checkDates = str(s.post(postURL, data=checkCoursesFormData).text)
+driver.find_element(
+    By.ID, "win0divPTNUI_LAND_REC_GROUPLET$2").click()
 
-except Exception as e:
-    print("Something went wrong\n")
-    print(e)
-    input("Press any button to quit.")
-    quit()
+driver.find_element(
+    By.ID, "win0divPTNUI_LAND_REC_GROUPLET$1").click()
 
+time.sleep(5)
+
+driver.find_element(
+    By.ID, "DERIVED_SSR_FL_SSR_VW_CLSCHD_OPT_LBL").click()
+
+time.sleep(5)
+
+endDateEndTimeData = driver.page_source
+
+time.sleep(5)
+
+driver.find_element(
+    By.ID, "DERIVED_SSR_FL_SSR_VW_CLSCHD_OPT$81$_LBL").click()
+
+time.sleep(5)
+
+
+checkDates = driver.page_source
 
 soup = BeautifulSoup(endDateEndTimeData, "html.parser")
 [s.extract() for s in soup(['style', 'script', '[document]', 'head', 'title'])]
@@ -388,10 +361,6 @@ def datesBetweenTwoDates(startDate, endDate, weekDay):
 
     return dates
 
-
-# for i in range(len(courseName)):
-#     courseName[i] = str(courseName[i].split(" ")[
-#         0]) + " " + str(courseName[i].split(" ")[1]) + " " + str(courseName[i].split(" ")[4])
 
 whereWeAre = 0
 
