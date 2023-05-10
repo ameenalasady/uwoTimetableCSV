@@ -10,6 +10,8 @@ The Western Timetable Exporter is a Python program that exports your course time
 - BeautifulSoup 4
 - dateutil
 - requests
+- selenium
+- ChromeDriver
 
 ## Installation
 
@@ -20,6 +22,8 @@ The Western Timetable Exporter is a Python program that exports your course time
 ```
 pip install -r requirements.txt
 ```
+4. Install ChromeDriver for your installed Google Chrome version.
+5. Change the "PATH" varaible to where your ChromeDriver.exe is.
 
 ## Usage
 
@@ -30,8 +34,9 @@ python main.py
 ```
 
 2. Enter your Western University username and password when prompted.
-3. The program will export your course timetable to a CSV file in the `output` directory.
-4. Import the CSV file into your calendar app.
+3. Complete your 2FA.
+4. The program will export your course timetable to a CSV file in the `output` directory.
+5. Import the CSV file into your calendar app.
 
 ## Limitations
 
