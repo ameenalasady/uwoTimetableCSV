@@ -1,6 +1,6 @@
 # Western Timetable Exporter
 
-~~**IMPORTANT NOTE:** This program is now available as a web application at https://western-schedule-exporter.web.app/. You can access all of its features and export your course timetable directly from the website without the need to install any packages or run any Python code.~~
+~~**IMPORTANT NOTE:** This program is now available as a web application at https://western-schedule-exporter.web.app/. You can access all of its features and export your course timetable directly from the website without the need to install any packages or run any Python code.~~ I have decided to discontinue this webapp due to the high costs associated with hosting a Selenium Grid. This repository contains the required code to run this on your local machine.
 
 The Western Timetable Exporter is a Python program that exports your course timetable from Western University's student center to a CSV file. The CSV file can be imported into Google Calendar or other calendar apps, allowing you to easily view your course schedule on the go.
 
