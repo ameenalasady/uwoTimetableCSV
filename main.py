@@ -37,7 +37,7 @@ filename = now.strftime("%Y-%m-%d_%H-%M-%S")
 
 op = webdriver.ChromeOptions()
 # uncomment this if you want chrome to be hidden.
-# op.add_argument('--headless')
+op.add_argument('--headless')
 op.add_argument('--service')
 op.add_argument('--hide-scrollbars')
 op.add_argument('--disable-gpu')
@@ -119,25 +119,6 @@ textCheckCourses = str(visible_text)
 responseCheckCourses = open("responseCheckCourses.txt", "w")
 responseCheckCourses.write(textCheckCourses)
 responseCheckCourses.close()
-
-
-# checkCoursesIndices = [m.start()
-#                        for m in re.finditer("Class Details - ", textCheckCourses)]
-# newLineIndicesCheckCourses = []
-
-# checkCourses = []
-
-# for i in range(len(checkCoursesIndices)):
-#     newLineIndicesCheckCourses.append(
-#         textCheckCourses[textCheckCourses[i]::].find("\n"))
-
-#     checkCourses.append(
-#         textCheckCourses[textCheckCourses[i]: newLineIndicesCheckCourses[i]])
-
-# checkCourses = list(set(checkCourses))
-
-# print(checkCourses)
-
 
 indicesOfTimes = [m.start()
                   for m in re.finditer("Time", textCheckCourses)]
