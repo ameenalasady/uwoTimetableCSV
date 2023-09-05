@@ -42,7 +42,7 @@ op.add_argument('--service')
 op.add_argument('--hide-scrollbars')
 op.add_argument('--disable-gpu')
 op.add_argument('--log-level=3')
-driver = webdriver.Chrome(options=op)
+driver = webdriver.Chrome(options=op, service=service)
 driver.implicitly_wait(10)
 
 
@@ -369,5 +369,7 @@ for i in range(len(courseName)):
         whereWeAre += 1
 
 print("Output CSV file has been saved in /output/"+str(filename)+".csv")
+
+html.close()
 
 input("Press any button to exit.")
